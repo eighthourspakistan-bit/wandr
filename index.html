@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wandr — Connect. Explore. Belong.</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0b0f1a; --surface: #131825; --surface2: #1a2133;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+    --accent: #7c6ff7; --accent2: #4ecdc4; --accent3: #ff6b6b;
+    --text: #f0f2f8; --muted: #7a859e; --muted2: #4a5568;
+    --card-radius: 16px; --pill-radius: 100px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; min-height: 100vh; }
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+  .app { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 72px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 6px; flex-shrink: 0; }
+  .logo-mark { width: 40px; height: 40px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .logo-mark svg { width: 22px; height: 22px; fill: white; }
+  .nav-btn { width: 46px; height: 46px; border-radius: 12px; border: none; background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.18s; position: relative; }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: rgba(124,111,247,0.15); color: var(--accent); }
+  .nav-btn.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 24px; background: var(--accent); border-radius: 0 3px 3px 0; }
+  .nav-spacer { flex: 1; }
+  .user-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: white; cursor: pointer; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0; }
+  .brand { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  .brand span { color: var(--accent); }
+  .topbar-tabs { display: flex; gap: 4px; }
+  .ttab { padding: 6px 16px; border-radius: var(--pill-radius); border: none; background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .ttab:hover { color: var(--text); background: var(--surface2); }
+  .ttab.active { background: var(--accent); color: white; }
+  .flex1 { flex: 1; }
+  .search-wrap { position: relative; }
+  .search-wrap input { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--pill-radius); padding: 8px 16px 8px 38px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; width: 220px; outline: none; transition: border 0.15s; }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--muted); }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .notif-btn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; }
+  .notif-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent3); border: 1.5px solid var(--surface); }
+  .content { flex: 1; display: flex; overflow: hidden; }
+  .panel { display: none; flex: 1; overflow-y: auto; }
+  .panel.active { display: flex; }
+  .feed-layout { flex: 1; display: grid; grid-template-columns: 1fr 280px; gap: 0; overflow: hidden; }
+  .feed-main { overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+  .feed-side { border-left: 1px solid var(--border); padding: 24px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+  .stories-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; }
+  .stories-row::-webkit-scrollbar { display: none; }
+  .story-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; }
+  .story-ring { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); padding: 2px; }
+  .story-inner { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .story-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .post-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); overflow: hidden; }
+  .post-header { display: flex; align-items: center; gap: 12px; padding: 16px 20px 0; }
+  .post-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+  .post-meta { flex: 1; }
+  .post-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .post-sub { font-size: 12px; color: var(--muted); }
+  .dest-tag { background: rgba(124,111,247,0.15); color: var(--accent); font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: var(--pill-radius); border: 1px solid rgba(124,111,247,0.25); }
+  .post-img { width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 48px; margin: 14px 0 0; }
+  .post-body { padding: 14px 20px; font-size: 14px; color: #b0bac8; line-height: 1.65; }
+  .post-actions { display: flex; gap: 8px; padding: 0 20px 16px; }
+  .pact { flex: 1; height: 34px; border-radius: var(--pill-radius); border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .pact:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+  .pact.join { background: rgba(124,111,247,0.12); color: var(--accent); border-color: rgba(124,111,247,0.3); }
+  .pact.join:hover { background: rgba(124,111,247,0.22); }
+  .side-section { display: flex; flex-direction: column; gap: 12px; }
+  .side-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--text); }
+  .buddy-item { display: flex; align-items: center; gap: 10px; }
+  .buddy-av { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .buddy-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .buddy-dest { font-size: 11px; color: var(--muted); }
+  .conn-btn { margin-left: auto; background: rgba(124,111,247,0.12); color: var(--accent); border: 1px solid rgba(124,111,247,0.25); border-radius: var(--pill-radius); padding: 4px 12px; font-size: 11px; font-weight: 500; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
+  .conn-btn:hover { background: rgba(124,111,247,0.25); }
+  .trip-pill { background: var(--surface2); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; border: 1px solid var(--border); }
+  .trip-pill:hover { border-color: var(--border2); }
+  .trip-info .tn { font-size: 13px; font-weight: 500; color: var(--text); }
+  .trip-info .tc { font-size: 11px; color: var(--muted); }
+  .live-row { display: flex; align-items: center; gap: 8px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
+  .live-name { font-size: 13px; color: var(--text); }
+  .live-count { font-size: 11px; color: var(--muted); margin-left: auto; }
+  .matcher-layout { flex: 1; padding: 32px; overflow-y: auto; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .page-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+  .matcher-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 28px; max-width: 640px; margin-bottom: 28px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border 0.15s; }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--surface2); }
+  .vibe-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .vibe-chip { padding: 6px 14px; border-radius: var(--pill-radius); border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .vibe-chip.sel { background: rgba(124,111,247,0.15); color: var(--accent); border-color: rgba(124,111,247,0.4); }
+  .ai-btn { width: 100%; height: 46px; background: var(--accent); border: none; border-radius: 12px; color: white; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .ai-btn:hover { opacity: 0.88; }
+  .ai-btn:disabled { opacity: 0.5; cursor: default; }
+  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; max-width: 900px; }
+  .buddy-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .buddy-card:hover { border-color: var(--border2); }
+  .bc-top { display: flex; align-items: center; gap: 12px; }
+  .bc-av { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .bc-name { font-size: 15px; font-weight: 500; }
+  .bc-loc { font-size: 12px; color: var(--muted); }
+  .match-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .match-label { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .match-bar { flex: 1; height: 4px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .match-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px; }
+  .match-pct { font-size: 12px; font-weight: 500; color: var(--accent); }
+  .bc-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bc-tag { font-size: 11px; background: var(--surface2); color: var(--muted); padding: 3px 9px; border-radius: var(--pill-radius); }
+  .bc-desc { font-size: 13px; color: #8a96ad; line-height: 1.6; }
+  .bc-actions { display: flex; gap: 8px; }
+  .bc-btn { flex: 1; height: 34px; border-radius: var(--pill-radius); border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; }
+  .bc-btn.primary { background: rgba(124,111,247,0.12); color: var(--accent); border-color: rgba(124,111,247,0.3); }
+  .loading-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px; color: var(--muted); }
+  .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .planner-layout { flex: 1; padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+  .planner-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 28px; max-width: 700px; }
+  .planner-result { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 28px; max-width: 700px; }
+  .result-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--accent2); }
+  .itinerary-day { margin-bottom: 20px; }
+  .day-label { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .day-items { display: flex; flex-direction: column; gap: 8px; padding-left: 16px; border-left: 2px solid var(--border); }
+  .day-item { display: flex; gap: 12px; align-items: flex-start; }
+  .time-badge { font-size: 11px; color: var(--muted); min-width: 52px; margin-top: 2px; }
+  .item-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+  .item-note { font-size: 12px; color: var(--muted); }
+  .translator-layout { flex: 1; padding: 32px; overflow-y: auto; }
+  .chat-window { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); max-width: 680px; overflow: hidden; }
+  .chat-topbar { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .chat-av { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #ff9a56, #ff6b6b); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .chat-user { font-size: 14px; font-weight: 500; }
+  .chat-online { font-size: 12px; color: var(--accent2); }
+  .lang-sel { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .lang-sel select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12px; outline: none; }
+  .messages-area { padding: 20px; height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+  .msg { display: flex; flex-direction: column; gap: 4px; max-width: 78%; }
+  .msg.them { align-self: flex-start; }
+  .msg.me { align-self: flex-end; }
+  .msg-bubble { padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
+  .msg.them .msg-bubble { background: var(--surface2); color: var(--text); border-bottom-left-radius: 4px; }
+  .msg.me .msg-bubble { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+  .msg-translation { font-size: 12px; color: var(--muted); font-style: italic; padding: 0 4px; }
+  .msg-time { font-size: 11px; color: var(--muted2); padding: 0 4px; }
+  .chat-input-bar { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end; }
+  .chat-input-bar textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; resize: none; height: 42px; max-height: 120px; transition: border 0.15s; }
+  .chat-input-bar textarea:focus { border-color: var(--accent); }
+  .send-btn { width: 42px; height: 42px; border-radius: 12px; background: var(--accent); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .send-btn:hover { opacity: 0.85; }
+  .ai-note { margin-top: 12px; font-size: 12px; color: var(--muted); background: var(--surface2); border-radius: 10px; padding: 10px 14px; max-width: 680px; border-left: 3px solid var(--accent); }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--muted2); border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    </div>
+    <button class="nav-btn active" onclick="switchPanel('feed',this)" title="Feed">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </button>
+    <button class="nav-btn" onclick="switchPanel('matcher',this)" title="Find Buddy">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </button>
+    <button class="nav-btn" onclick="switchPanel('planner',this)" title="Trip Planner">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </button>
+    <button class="nav-btn" onclick="switchPanel('translator',this)" title="Chat & Translate">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+    <div class="nav-spacer"></div>
+    <div class="user-avatar">YS</div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="brand">Wand<span>r</span></div>
+      <div class="topbar-tabs">
+        <button class="ttab active" data-panel="feed">Feed</button>
+        <button class="ttab" data-panel="matcher">Find Buddy</button>
+        <button class="ttab" data-panel="planner">Trip Planner</button>
+        <button class="ttab" data-panel="translator">Translate Chat</button>
+      </div>
+      <div class="flex1"></div>
+      <div class="search-wrap">
+        <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input type="text" placeholder="Search destinations..."/>
+      </div>
+      <button class="notif-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="notif-dot"></div>
+      </button>
+    </header>
+
+    <div class="content">
+
+      <!-- FEED -->
+      <div class="panel active" id="panel-feed">
+        <div class="feed-layout">
+          <div class="feed-main">
+            <div class="stories-row">
+              <div class="story-item"><div class="story-ring"><div class="story-inner">🇯🇵</div></div><div class="story-label">Aiko</div></div>
+              <div class="story-item"><div class="story-ring"><div class="story-inner">🇧🇷</div></div><div class="story-label">Lucas</div></div>
+              <div class="story-item"><div class="story-ring"><div class="story-inner">🇮🇳</div></div><div class="story-label">Priya</div></div>
+              <div class="story-item"><div class="story-ring"><div class="story-inner">🇩🇪</div></div><div class="story-label">Leon</div></div>
+              <div class="story-item"><div class="story-ring"><div class="story-inner">🇿🇦</div></div><div class="story-label">Zara</div></div>
+              <div class="story-item"><div class="story-ring"><div class="story-inner">🇲🇽</div></div><div class="story-label">Sofia</div></div>
+              <div class="story-item"><div class="story-ring"><div class="story-inner">🇰🇷</div></div><div class="story-label">Min-ji</div></div>
+            </div>
+            <div class="post-card">
+              <div class="post-header">
+                <div class="post-avatar" style="background:rgba(78,205,196,0.15);color:#4ecdc4;">AL</div>
+                <div class="post-meta"><div class="post-name">Aiko Lena</div><div class="post-sub">Tokyo · 2h ago</div></div>
+                <div class="dest-tag">Kyoto</div>
+              </div>
+              <div class="post-img" style="background:linear-gradient(135deg,rgba(78,205,196,0.12),rgba(78,205,196,0.05));">⛩️</div>
+              <div class="post-body">Just arrived at Fushimi Inari! Looking for someone to explore the bamboo grove tomorrow morning. Anyone in Kyoto this week? 🌿</div>
+              <div class="post-actions">
+                <button class="pact">❤️ 24</button><button class="pact">💬 8</button>
+                <button class="pact join" onclick="switchPanel('matcher',null)">Join trip →</button>
+              </div>
+            </div>
+            <div class="post-card">
+              <div class="post-header">
+                <div class="post-avatar" style="background:rgba(255,107,107,0.12);color:#ff6b6b;">LM</div>
+                <div class="post-meta"><div class="post-name">Lucas Moreno</div><div class="post-sub">São Paulo · 5h ago</div></div>
+                <div class="dest-tag">Lisbon</div>
+              </div>
+              <div class="post-img" style="background:linear-gradient(135deg,rgba(255,107,107,0.12),rgba(255,107,107,0.04));">🌊</div>
+              <div class="post-body">Solo trip to Lisbon next month — anyone heading to Portugal in October? Would love to form a small group for Sintra day trips 🏰</div>
+              <div class="post-actions">
+                <button class="pact">❤️ 41</button><button class="pact">💬 15</button>
+                <button class="pact join" onclick="switchPanel('planner',null)">Plan trip →</button>
+              </div>
+            </div>
+            <div class="post-card">
+              <div class="post-header">
+                <div class="post-avatar" style="background:rgba(124,111,247,0.15);color:#7c6ff7;">PK</div>
+                <div class="post-meta"><div class="post-name">Priya Kapoor</div><div class="post-sub">Mumbai · 1d ago</div></div>
+                <div class="dest-tag">Bali</div>
+              </div>
+              <div class="post-img" style="background:linear-gradient(135deg,rgba(124,111,247,0.12),rgba(124,111,247,0.04));">🌴</div>
+              <div class="post-body">2 weeks solo in Bali done! Best moment: joined a sunrise hike through Wandr with 4 strangers — now we're planning our next trip together 🔥</div>
+              <div class="post-actions">
+                <button class="pact">❤️ 98</button><button class="pact">💬 32</button>
+                <button class="pact join">Share story →</button>
+              </div>
+            </div>
+          </div>
+          <div class="feed-side">
+            <div class="side-section">
+              <div class="side-title">Suggested buddies</div>
+              <div class="buddy-item"><div class="buddy-av" style="background:rgba(255,154,86,0.15);color:#ff9a56;">SC</div><div><div class="buddy-name">Sofia C.</div><div class="buddy-dest">Mexico City → Paris</div></div><button class="conn-btn">Connect</button></div>
+              <div class="buddy-item"><div class="buddy-av" style="background:rgba(78,205,196,0.12);color:#4ecdc4;">ZN</div><div><div class="buddy-name">Zara N.</div><div class="buddy-dest">Cape Town → Tokyo</div></div><button class="conn-btn">Connect</button></div>
+              <div class="buddy-item"><div class="buddy-av" style="background:rgba(124,111,247,0.15);color:#7c6ff7;">LB</div><div><div class="buddy-name">Leon B.</div><div class="buddy-dest">Berlin → Seoul</div></div><button class="conn-btn">Connect</button></div>
+            </div>
+            <div class="side-section">
+              <div class="side-title">Trending destinations</div>
+              <div class="trip-pill"><span style="font-size:22px;">🇹🇭</span><div class="trip-info"><div class="tn">Bangkok</div><div class="tc">142 travelers</div></div></div>
+              <div class="trip-pill"><span style="font-size:22px;">🇵🇹</span><div class="trip-info"><div class="tn">Lisbon</div><div class="tc">98 travelers</div></div></div>
+              <div class="trip-pill"><span style="font-size:22px;">🇯🇵</span><div class="trip-info"><div class="tn">Kyoto</div><div class="tc">87 travelers</div></div></div>
+            </div>
+            <div class="side-section">
+              <div class="side-title">Live rooms</div>
+              <div class="live-row"><div class="live-dot"></div><div class="live-name">Bali Solo Travelers</div><div class="live-count">23 online</div></div>
+              <div class="live-row"><div class="live-dot"></div><div class="live-name">Europe in October</div><div class="live-count">11 online</div></div>
+              <div class="live-row"><div class="live-dot" style="background:#4a5568;"></div><div class="live-name">Southeast Asia Tips</div><div class="live-count">3 online</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUDDY MATCHER -->
+      <div class="panel" id="panel-matcher">
+        <div class="matcher-layout">
+          <div class="page-title">AI Travel Buddy Matcher</div>
+          <div class="page-sub">Tell us about your trip and we'll find your perfect travel companions</div>
+          <div class="matcher-form">
+            <div class="form-grid">
+              <div class="form-group"><label>Your name</label><input type="text" id="m-name" placeholder="e.g. Yasir"/></div>
+              <div class="form-group"><label>Destination</label><input type="text" id="m-dest" placeholder="e.g. Tokyo, Japan"/></div>
+              <div class="form-group"><label>Travel dates</label><input type="text" id="m-dates" placeholder="e.g. Dec 10-20"/></div>
+              <div class="form-group"><label>Budget</label>
+                <select id="m-budget"><option value="budget">Budget backpacker</option><option value="mid" selected>Mid-range</option><option value="luxury">Luxury</option></select>
+              </div>
+            </div>
+            <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Travel vibe</div>
+            <div class="vibe-row">
+              <button class="vibe-chip" onclick="toggleVibe(this)">🏔️ Adventure</button>
+              <button class="vibe-chip sel" onclick="toggleVibe(this)">🍜 Foodie</button>
+              <button class="vibe-chip" onclick="toggleVibe(this)">🏛️ Cultural</button>
+              <button class="vibe-chip sel" onclick="toggleVibe(this)">📸 Photography</button>
+              <button class="vibe-chip" onclick="toggleVibe(this)">🎉 Nightlife</button>
+              <button class="vibe-chip" onclick="toggleVibe(this)">🧘 Wellness</button>
+              <button class="vibe-chip" onclick="toggleVibe(this)">🏖️ Beach</button>
+              <button class="vibe-chip" onclick="toggleVibe(this)">🎒 Backpacking</button>
+            </div>
+            <button class="ai-btn" onclick="findBuddies()" id="match-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+              Find my travel buddies
+            </button>
+          </div>
+          <div id="match-results"></div>
+        </div>
+      </div>
+
+      <!-- TRIP PLANNER -->
+      <div class="panel" id="panel-planner">
+        <div class="planner-layout">
+          <div class="page-title">AI Trip Planner</div>
+          <div class="page-sub">Plan a group itinerary powered by AI</div>
+          <div class="planner-form">
+            <div class="form-grid">
+              <div class="form-group"><label>Destination</label><input type="text" id="p-dest" placeholder="e.g. Lisbon, Portugal"/></div>
+              <div class="form-group"><label>Duration</label>
+                <select id="p-days"><option>3 days</option><option selected>5 days</option><option>7 days</option><option>10 days</option></select>
+              </div>
+              <div class="form-group" style="grid-column:1/-1;"><label>Group interests</label><input type="text" id="p-prefs" placeholder="e.g. history, food, photography, hiking"/></div>
+            </div>
+            <button class="ai-btn" onclick="planTrip()" id="plan-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              Generate itinerary
+            </button>
+          </div>
+          <div id="planner-result"></div>
+        </div>
+      </div>
+
+      <!-- TRANSLATOR -->
+      <div class="panel" id="panel-translator">
+        <div class="translator-layout">
+          <div class="page-title">AI Chat Translator</div>
+          <div class="page-sub" style="margin-bottom:20px;">Chat with anyone worldwide — messages auto-translate in real time</div>
+          <div class="chat-window">
+            <div class="chat-topbar">
+              <div class="chat-av">🇧🇷</div>
+              <div><div class="chat-user">Lucas Moreno</div><div class="chat-online">● Online · Lisbon</div></div>
+              <div class="lang-sel">
+                <span style="font-size:12px;color:var(--muted);">Translate to:</span>
+                <select id="lang-select">
+                  <option value="English">English</option><option value="Spanish">Spanish</option>
+                  <option value="French">French</option><option value="Japanese">Japanese</option>
+                  <option value="Portuguese">Portuguese</option><option value="Arabic">Arabic</option>
+                  <option value="Urdu">Urdu</option><option value="Hindi">Hindi</option>
+                  <option value="German">German</option><option value="Korean">Korean</option>
+                </select>
+              </div>
+            </div>
+            <div class="messages-area" id="messages-area">
+              <div class="msg them">
+                <div class="msg-bubble">Olá! Você também está indo para Lisboa em outubro?</div>
+                <div class="msg-translation">🌐 "Hello! Are you also going to Lisbon in October?"</div>
+                <div class="msg-time">10:24 AM</div>
+              </div>
+              <div class="msg me">
+                <div class="msg-bubble">Yes! So excited. I've always wanted to see Sintra 🏰</div>
+                <div class="msg-time">10:25 AM</div>
+              </div>
+              <div class="msg them">
+                <div class="msg-bubble">Incrível! Podemos ir juntos. Eu conheço os melhores restaurantes locais!</div>
+                <div class="msg-translation">🌐 "Amazing! We can go together. I know the best local restaurants!"</div>
+                <div class="msg-time">10:26 AM</div>
+              </div>
+            </div>
+            <div class="chat-input-bar">
+              <textarea id="chat-input" placeholder="Type a message..." onkeydown="handleKey(event)"></textarea>
+              <button class="send-btn" onclick="sendMessage()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="ai-note">💡 AI translates incoming messages to your chosen language in real time.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchPanel(id, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.ttab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + id).classList.add('active');
+    if (btn) btn.classList.add('active');
+    document.querySelectorAll('.ttab').forEach(t => { if (t.dataset.panel === id) t.classList.add('active'); });
+  }
+  document.querySelectorAll('.ttab').forEach(t => {
+    t.addEventListener('click', () => {
+      const id = t.dataset.panel;
+      const idx = ['feed','matcher','planner','translator'].indexOf(id);
+      switchPanel(id, document.querySelectorAll('.nav-btn')[idx]);
+    });
+  });
+  function toggleVibe(el) { el.classList.toggle('sel'); }
+
+  // ── API via Netlify Function (no CORS issues) ──
+  async function callClaude(prompt, systemPrompt) {
+    const res = await fetch('/.netlify/functions/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: systemPrompt,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!res.ok) throw new Error('Server error: ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+    return data.content.map(b => b.text || '').join('');
+  }
+
+  async function findBuddies() {
+    const name = document.getElementById('m-name').value || 'Traveler';
+    const dest = document.getElementById('m-dest').value || 'Tokyo';
+    const dates = document.getElementById('m-dates').value || 'December';
+    const budget = document.getElementById('m-budget').value;
+    const vibes = [...document.querySelectorAll('.vibe-chip.sel')].map(v => v.textContent.trim()).join(', ');
+    const btn = document.getElementById('match-btn');
+    const resultsEl = document.getElementById('match-results');
+    btn.disabled = true; btn.textContent = 'Finding matches...';
+    resultsEl.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Finding your ideal travel buddies...</div></div>';
+    try {
+      const raw = await callClaude(
+        `Create 4 travel buddy profiles for ${name} going to ${dest} in ${dates} with ${budget} budget, interests: ${vibes}. Return JSON array with: name, age, from, match (70-99), tags (3 strings), bio (1 sentence), initials (2 chars), colorBg (hex), colorText (dark hex). ONLY JSON array.`,
+        'Return only valid JSON array, no markdown.'
+      );
+      const buddies = JSON.parse(raw.replace(/```json|```/gi,'').trim());
+      resultsEl.innerHTML = '<div class="results-grid">' + buddies.map(b =>
+        `<div class="buddy-card"><div class="bc-top"><div class="bc-av" style="background:${b.colorBg};color:${b.colorText};">${b.initials}</div><div><div class="bc-name">${b.name}, ${b.age}</div><div class="bc-loc">📍 ${b.from}</div></div></div><div class="match-bar-wrap"><div class="match-label">Match</div><div class="match-bar"><div class="match-fill" style="width:${b.match}%"></div></div><div class="match-pct">${b.match}%</div></div><div class="bc-tags">${b.tags.map(t=>'<div class="bc-tag">'+t+'</div>').join('')}</div><div class="bc-desc">${b.bio}</div><div class="bc-actions"><button class="bc-btn">View profile</button><button class="bc-btn primary">Connect</button></div></div>`
+      ).join('') + '</div>';
+    } catch(e) {
+      resultsEl.innerHTML = '<div class="loading-state">❌ ' + e.message + '</div>';
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg> Find my travel buddies';
+  }
+
+  async function planTrip() {
+    const dest = document.getElementById('p-dest').value || 'Lisbon, Portugal';
+    const days = document.getElementById('p-days').value;
+    const prefs = document.getElementById('p-prefs').value || 'history, food, photography';
+    const btn = document.getElementById('plan-btn');
+    const resultEl = document.getElementById('planner-result');
+    btn.disabled = true; btn.textContent = 'Planning your trip...';
+    resultEl.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Crafting your itinerary...</div></div>';
+    try {
+      const raw = await callClaude(
+        `Create a ${days} itinerary for a group visiting ${dest}. Interests: ${prefs}. Return JSON: { "title": "string", "days": [{ "day": 1, "theme": "string", "items": [{ "time": "9:00 AM", "activity": "string", "note": "string" }] }] }. ONLY JSON.`,
+        'Return only valid JSON, no markdown.'
+      );
+      const plan = JSON.parse(raw.replace(/```json|```/gi,'').trim());
+      resultEl.innerHTML = '<div class="planner-result"><div class="result-title">' + plan.title + '</div>' +
+        plan.days.map(d => '<div class="itinerary-day"><div class="day-label">Day ' + d.day + ' — ' + d.theme + '</div><div class="day-items">' +
+          d.items.map(i => '<div class="day-item"><div class="time-badge">' + i.time + '</div><div><div class="item-text">' + i.activity + '</div><div class="item-note">' + (i.note||'') + '</div></div></div>').join('') +
+        '</div></div>').join('') + '</div>';
+    } catch(e) {
+      resultEl.innerHTML = '<div class="loading-state">❌ ' + e.message + '</div>';
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Generate itinerary';
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim(); if (!text) return;
+    const lang = document.getElementById('lang-select').value;
+    const area = document.getElementById('messages-area');
+    input.value = '';
+    const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const myMsg = document.createElement('div'); myMsg.className = 'msg me';
+    myMsg.innerHTML = '<div class="msg-bubble">' + text + '</div><div class="msg-time">' + now + '</div>';
+    area.appendChild(myMsg);
+    const thinkEl = document.createElement('div'); thinkEl.className = 'msg them';
+    thinkEl.innerHTML = '<div class="msg-bubble" style="color:var(--muted);">...</div>';
+    area.appendChild(thinkEl); area.scrollTop = area.scrollHeight;
+    try {
+      const raw = await callClaude(
+        `User said: "${text}". Reply as Lucas, friendly Brazilian traveler in Lisbon, in Portuguese. Then give ${lang} translation. Return ONLY JSON: { "reply_portuguese": "...", "translation": "..." }`,
+        'Return only valid JSON, no markdown.'
+      );
+      const parsed = JSON.parse(raw.replace(/```json|```/gi,'').trim());
+      thinkEl.innerHTML = '<div class="msg-bubble">' + parsed.reply_portuguese + '</div><div class="msg-translation">🌐 "' + parsed.translation + '"</div><div class="msg-time">' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + '</div>';
+    } catch(e) {
+      thinkEl.innerHTML = '<div class="msg-bubble" style="color:var(--muted);">❌ ' + e.message + '</div>';
+    }
+    area.scrollTop = area.scrollHeight;
+  }
+  function handleKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+</script>
+</body>
+</html>
